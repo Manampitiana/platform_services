@@ -1,38 +1,70 @@
 import { Link } from 'react-router-dom'
-import { Rocket } from 'lucide-react'
+import { Mail, MapPin, Phone } from 'lucide-react'
+import { site } from '../../config/site'
+import BrandLogo from '../common/BrandLogo'
+
+const columns = [
+  {
+    title: 'Services',
+    links: [
+      { to: '/services/cv-design', label: 'CV design' },
+      { to: '/services/logo-design', label: 'Logo design' },
+      { to: '/services/website-creation', label: 'Website creation' },
+      { to: '/services/custom-project', label: 'Custom project' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { to: '/about', label: 'About us' },
+      { to: '/faq', label: 'FAQ' },
+      { to: '/contact', label: 'Contact' },
+      { to: '/register', label: 'Create an account' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { to: '/terms', label: 'Terms of service' },
+      { to: '/privacy', label: 'Privacy policy' },
+      { to: '/refunds', label: 'Refund policy' },
+    ],
+  },
+]
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
-        <div>
-          <div className="flex items-center gap-2 text-lg font-bold">
-            <Rocket className="h-5 w-5 text-brand-600" />
-            DigitalHub
+    <footer className="bg-slate-950 text-slate-400">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="space-y-4">
+          <BrandLogo light />
+          <p className="max-w-xs text-sm leading-relaxed">{site.tagline}</p>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4 shrink-0" /> <a href={`mailto:${site.email}`} className="hover:text-white">{site.email}</a></li>
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4 shrink-0" /> <a href={`tel:${site.phone.replace(/\s/g, '')}`} className="hover:text-white">{site.phone}</a></li>
+            <li className="flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0" /> {site.address}</li>
+          </ul>
+        </div>
+
+        {columns.map((col) => (
+          <div key={col.title}>
+            <h4 className="text-sm font-semibold text-white">{col.title}</h4>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {col.links.map((l) => (
+                <li key={l.to}>
+                  <Link to={l.to} className="transition hover:text-white">{l.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="mt-3 max-w-xs text-sm text-slate-500">
-            Professional CVs, logos and websites, ordered and tracked in one place.
-          </p>
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold">Company</h4>
-          <ul className="mt-3 space-y-2 text-sm text-slate-500">
-            <li><Link to="/services" className="hover:text-brand-600">Services</Link></li>
-            <li><Link to="/register" className="hover:text-brand-600">Create an account</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold">Contact</h4>
-          <ul className="mt-3 space-y-2 text-sm text-slate-500">
-            <li>contact@digitalhub.mg</li>
-            <li>Antananarivo, Madagascar</li>
-          </ul>
-        </div>
+        ))}
       </div>
-      <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} DigitalHub. All rights reserved.
+
+      <div className="border-t border-slate-800">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs sm:flex-row">
+          <p>© {new Date().getFullYear()} {site.legalName}. All rights reserved.</p>
+          <p>{site.hours}</p>
+        </div>
       </div>
     </footer>
   )

@@ -1,43 +1,69 @@
-import { useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { Menu, Rocket, X } from 'lucide-react'
-
+import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import Avatar from '../common/Avatar'
+import BrandLogo from '../common/BrandLogo'
 import Button from '../common/Button'
 
 const links = [
   { to: '/', label: 'Home', end: true },
   { to: '/services', label: 'Services' },
+  { to: '/faq', label: 'FAQ' },
+  { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
 ]
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
-  const { isAuthenticated, isAdmin } = useAuth()
+  const { user, isAuthenticated, isAdmin } = useAuth()
+  const { pathname } = useLocation()
 
-  const linkClass = ({ isActive }) =>
-    `text-sm font-medium transition hover:text-brand-600 ${isActive ? 'text-brand-600' : 'text-slate-600'}`
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
+  const appLink = isAdmin ? '/admin' : '/dashboard'
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold">
-          <Rocket className="h-5 w-5 text-brand-600" />
-          DigitalHub
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+        <BrandLogo />
 
-        <nav className="hidden items-center gap-8 md:flex">
-          {links.map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
-              {l.label}
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+          {links.map(({ to, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `relative rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive ? 'text-brand-700' : 'text-slate-600 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.span
+                      layoutId="public-nav-pill"
+                      className="absolute inset-0 rounded-lg bg-brand-50"
+                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {isAuthenticated ? (
-            <Link to={isAdmin ? '/admin' : '/dashboard'}>
-              <Button size="sm">{isAdmin ? 'Admin' : 'Dashboard'}</Button>
+            <Link to={appLink} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition hover:bg-slate-100">
+              <Avatar name={user?.name} src={user?.avatar_url} size="sm" />
+              <span className="text-sm font-medium">{isAdmin ? 'Admin' : 'Dashboard'}</span>
             </Link>
           ) : (
             <>
@@ -52,9 +78,10 @@ export default function Navbar() {
         </div>
 
         <button
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
+          className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 md:hidden"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -63,28 +90,45 @@ export default function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t border-slate-200 bg-white px-4 md:hidden"
+            className="overflow-hidden border-t border-slate-200 bg-white md:hidden"
           >
-            <div className="space-y-3 py-4">
-              {isAuthenticated ? (
-                <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex-1" onClick={() => setOpen(false)}>
-                  <Button className="w-full">{isAdmin ? 'Admin' : 'Dashboard'}</Button>
-                </Link>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button variant="secondary" className="w-full">Sign in</Button>
+            <nav className="space-y-1 px-4 py-3" aria-label="Mobile">
+              {links.map(({ to, label, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `block rounded-lg px-3 py-2.5 text-sm font-medium ${
+                      isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
+
+              <div className="flex gap-2 pt-3">
+                {isAuthenticated ? (
+                  <Link to={appLink} className="flex-1">
+                    <Button className="w-full">{isAdmin ? 'Admin panel' : 'Dashboard'}</Button>
                   </Link>
-                  <Link to="/register" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button className="w-full">Get started</Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <Link to="/login" className="flex-1">
+                      <Button variant="secondary" className="w-full">Sign in</Button>
+                    </Link>
+                    <Link to="/register" className="flex-1">
+                      <Button className="w-full">Get started</Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

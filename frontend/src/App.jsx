@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import GuestRoute from './routes/GuestRoute'
 import ProtectedRoute from './routes/ProtectedRoute'
+
+
 import Home from './pages/public/Home'
 import Services from './pages/public/Services'
 import Login from './pages/auth/Login'
@@ -27,14 +29,29 @@ import AdminPayments from './pages/admin/AdminPayments'
 import AdminServices from './pages/admin/AdminServices'
 import AdminServiceEdit from './pages/admin/AdminServiceEdit'
 import AdminPaymentMethods from './pages/admin/AdminPaymentMethods'
+import Faq from './pages/public/Faq'
+import About from './pages/public/About'
+import Contact from './pages/public/Contact'
+import Terms from './pages/public/legal/Terms'
+import NotFound from './pages/NotFound'
+import Privacy from './pages/public/legal/Privacy'
+import Refunds from './pages/public/legal/Refunds'
 
 export default function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
+
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/services/:slug" element={<ServiceDetail />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/refunds" element={<Refunds />} />
+        <Route path="*" element={<NotFound />} />
 
       </Route>
 
