@@ -1,0 +1,38 @@
+export const mockServices = [
+  {
+    id: 1,
+    slug: 'cv-design',
+    icon: 'cv',
+    name: 'CV Design',
+    shortDescription: 'A clean, professional resume that helps you stand out to recruiters.',
+    basePrice: 15000,
+    estimatedDays: 2,
+  },
+  {
+    id: 2,
+    slug: 'logo-design',
+    icon: 'logo',
+    name: 'Logo Design',
+    shortDescription: 'A memorable logo and brand identity tailored to your business.',
+    basePrice: 50000,
+    estimatedDays: 5,
+  },
+  {
+    id: 3,
+    slug: 'website-creation',
+    icon: 'website',
+    name: 'Website Creation',
+    shortDescription: 'Modern, responsive websites built from a template or fully custom.',
+    basePrice: 300000,
+    estimatedDays: 14,
+  },
+  {
+    id: 4,
+    slug: 'custom-project',
+    icon: 'custom',
+    name: 'Custom Project',
+    shortDescription: 'Have a different need? Describe it and receive a tailored quote.',
+    basePrice: null,
+    estimatedDays: null,
+  },
+]
