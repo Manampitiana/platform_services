@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminQuoteController;
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\DeliverableController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\OrderFileController;
@@ -32,6 +33,8 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
+
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,10');
 
     // Ilaina ny anarana "verification.verify" (ampiasain'ny AppServiceProvider)
     Route::post('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
