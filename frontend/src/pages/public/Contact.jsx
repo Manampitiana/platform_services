@@ -24,7 +24,7 @@ const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
   subject: z.string().min(1, 'Please choose a subject'),
   message: z.string().trim().min(10, 'Please write at least 10 characters').max(3000, 'Message is too long'),
-  website: z.string().optional(), // honeypot
+  contact_extra: z.string().optional(), // honeypot
 })
 
 const info = [
@@ -49,7 +49,7 @@ export default function Contact() {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', subject: '', message: '', website: '' },
+    defaultValues: { name: '', email: '', subject: '', message: '', contact_extra: '' },
   })
 
   const onSubmit = async (values) => {
@@ -101,8 +101,8 @@ export default function Contact() {
                 {/* Honeypot: nafenina amin'ny olombelona */}
                 <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                   <label>
-                    Website
-                    <input type="text" tabIndex={-1} autoComplete="off" {...register('website')} />
+                    Leave this field empty
+                    <input type="text" tabIndex={-1} autoComplete="off" {...register('contact_extra')} />
                   </label>
                 </div>
 

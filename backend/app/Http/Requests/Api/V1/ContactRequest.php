@@ -24,7 +24,8 @@ class ContactRequest extends FormRequest
             'subject' => ['required', Rule::in(self::SUBJECTS)],
             'message' => ['required', 'string', 'min:10', 'max:3000'],
             // Honeypot: tsy tokony hofenoin'ny olombelona
-            'website' => ['nullable', 'string', 'max:255'],
+            'contact_extra' => ['nullable', 'string', 'max:255'],
+            // 'website' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

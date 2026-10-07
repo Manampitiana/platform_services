@@ -29,6 +29,9 @@ import AdminPayments from './pages/admin/AdminPayments'
 import AdminServices from './pages/admin/AdminServices'
 import AdminServiceEdit from './pages/admin/AdminServiceEdit'
 import AdminPaymentMethods from './pages/admin/AdminPaymentMethods'
+import AdminContactMessages from './pages/admin/AdminContactMessages'
+
+
 import Faq from './pages/public/Faq'
 import About from './pages/public/About'
 import Contact from './pages/public/Contact'
@@ -84,6 +87,7 @@ export default function App() {
               <Route path="/admin/orders" element={<AdminOrders />} />
               <Route path="/admin/orders/:uuid" element={<AdminOrderDetail />} />
               <Route path="/admin/payments" element={<AdminPayments />} />
+              <Route path="/admin/contact" element={<AdminContactMessages />} />
               <Route path="/admin/services" element={<AdminServices />} />
               <Route path="/admin/services/new" element={<AdminServiceEdit />} />
               <Route path="/admin/services/:id" element={<AdminServiceEdit />} />

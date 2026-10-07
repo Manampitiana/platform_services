@@ -17,24 +17,28 @@ class ContactController extends Controller
 
     public function store(ContactRequest $request): JsonResponse
     {
-        // Honeypot: valiny mitovy amin'ny nahomby, fa tsy misy tahiry (tsy ahafantatry ny robot)
-        if (filled($request->input('website'))) {
-            return response()->json(['message' => self::THANKS], 201);
-        }
+        $honeypot = trim((string) $request->input('contact_extra'));
+
+        // Mitovy amin'ny e-mail ny honeypot → autofill avy amin'ny navigateur, tsy robot
+        $autofilled = $honeypot !== '' && strcasecmp($honeypot, (string) $request->input('email')) === 0;
+        $spam = $honeypot !== '' && ! $autofilled;
 
         $message = ContactMessage::create([
             ...$request->safe()->only(['name', 'email', 'subject', 'message']),
+            'is_spam' => $spam,
             'ip_address' => $request->ip(),
             'user_agent' => Str::limit((string) $request->userAgent(), 255, ''),
         ]);
 
-        $admins = User::where('role', 'admin')->get();
+        if (! $spam) {
+            $admins = User::where('role', 'admin')->get();
 
-        if ($admins->isNotEmpty()) {
-            try {
-                Notification::send($admins, new ContactReceived($message));
-            } catch (\Throwable $e) {
-                report($e); // voatahiry ihany ny hafatra na diso aza ny e-mail
+            if ($admins->isNotEmpty()) {
+                try {
+                    Notification::send($admins, new ContactReceived($message));
+                } catch (\Throwable $e) {
+                    report($e); // voatahiry ihany ny hafatra na diso aza ny e-mail
+                }
             }
         }
 

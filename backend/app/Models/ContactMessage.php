@@ -7,11 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class ContactMessage extends Model
 {
     protected $fillable = [
-        'name', 'email', 'subject', 'message', 'ip_address', 'user_agent', 'handled_at',
+        'name', 'email', 'subject', 'message', 'ip_address', 'is_spam', 'user_agent', 'handled_at',
     ];
 
     protected function casts(): array
     {
-        return ['handled_at' => 'datetime'];
+        return [
+            'handled_at' => 'datetime',
+            'is_spam' => 'boolean'
+        ];
     }
 }

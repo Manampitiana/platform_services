@@ -66,6 +66,27 @@ export function useAdminService(id) {
   })
 }
 
+export function useAdminContactMessages(params = {}) {
+  return useQuery({
+    queryKey: ['admin', 'contact', params],
+    queryFn: () => adminApi.contactMessages(params),
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useContactOpenCount() {
+  return useQuery({
+    queryKey: ['admin', 'contact-count'],
+    queryFn: adminApi.contactCount,
+    refetchInterval: 60_000,
+  })
+}
+
+export const useHandleContact = () =>
+  useAdminMutation(({ id, reopen }) => (reopen ? adminApi.reopenContact(id) : adminApi.handleContact(id)))
+
+export const useDeleteContact = () => useAdminMutation(adminApi.deleteContact)
+
 export const useSavePaymentMethod = () =>
   useAdminMutation(({ id, ...payload }) =>
     id ? adminApi.updatePaymentMethod(id, payload) : adminApi.createPaymentMethod(payload)

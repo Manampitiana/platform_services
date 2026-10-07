@@ -39,4 +39,11 @@ export const adminApi = {
     api.post(`/admin/services/${serviceId}/packages`, payload).then((res) => res.data.data),
   updatePackage: (id, payload) => api.patch(`/admin/packages/${id}`, payload).then((res) => res.data.data),
   deletePackage: (id) => api.delete(`/admin/packages/${id}`).then((res) => res.data.data),
+
+  // Contact messages
+  contactMessages: (params = {}) => api.get('/admin/contact-messages', { params }).then((res) => res.data),
+  contactCount: () => api.get('/admin/contact-messages/count').then((res) => res.data.data.open),
+  handleContact: (id) => api.post(`/admin/contact-messages/${id}/handle`).then((res) => res.data.data),
+  reopenContact: (id) => api.post(`/admin/contact-messages/${id}/reopen`).then((res) => res.data.data),
+  deleteContact: (id) => api.delete(`/admin/contact-messages/${id}`),
 }

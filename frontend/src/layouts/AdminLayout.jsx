@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   CreditCard,
   Globe,
+  Inbox,
   Landmark,
   LayoutDashboard,
   Package,
@@ -11,10 +12,12 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useUnread } from '../hooks/useUnread'
 import AppShell from '../components/layout/AppShell'
+import { useContactOpenCount } from '../hooks/useAdmin'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const { data: unread } = useUnread()
+  const { data: contactOpen } = useContactOpenCount()
 
   const sections = [
     {
@@ -26,6 +29,7 @@ export default function AdminLayout() {
       items: [
         { to: '/admin/orders', label: 'Orders', icon: ShoppingBag, badge: unread?.total },
         { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+        { to: '/admin/contact', label: 'Contact inbox', icon: Inbox, badge: contactOpen },
       ],
     },
     {

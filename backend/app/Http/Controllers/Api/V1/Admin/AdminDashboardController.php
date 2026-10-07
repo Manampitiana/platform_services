@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Models\ContactMessage;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
@@ -103,6 +104,7 @@ class AdminDashboardController extends Controller
                 'actions' => [
                     'payments_to_verify' => Payment::where('status', PaymentStatus::ProofSubmitted->value)->count(),
                     'orders_to_review' => (int) ($counts['submitted'] ?? 0) + (int) ($counts['under_review'] ?? 0),
+                    'contact_messages' => ContactMessage::where('is_spam', false)->whereNull('handled_at')->count(),
                     'quotes_to_prepare' => (int) ($counts['quote_pending'] ?? 0),
                     'revisions_requested' => (int) ($counts['revision'] ?? 0),
                 ],

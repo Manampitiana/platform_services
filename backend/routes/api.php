@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminContactMessageController;
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminDeliverableController;
 use App\Http\Controllers\Api\V1\Admin\AdminOrderController;
@@ -138,6 +139,12 @@ Route::prefix('v1')->group(function () {
                 Route::post('/services/{service}/packages', [AdminPackageController::class, 'store']);
                 Route::patch('/packages/{package}', [AdminPackageController::class, 'update']);
                 Route::delete('/packages/{package}', [AdminPackageController::class, 'destroy']);
+
+                Route::get('/contact-messages', [AdminContactMessageController::class, 'index']);
+                Route::get('/contact-messages/count', [AdminContactMessageController::class, 'count']);
+                Route::post('/contact-messages/{contactMessage}/handle', [AdminContactMessageController::class, 'handle']);
+                Route::post('/contact-messages/{contactMessage}/reopen', [AdminContactMessageController::class, 'reopen']);
+                Route::delete('/contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy']);
             });
         });
     });

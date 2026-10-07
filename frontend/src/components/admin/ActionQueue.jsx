@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { CheckCircle2, ChevronRight, ClipboardList, CreditCard, FileText, MessageSquare, RefreshCw } from 'lucide-react'
+import { CheckCircle2, ChevronRight, ClipboardList, CreditCard, FileText, Inbox, MessageSquare, RefreshCw } from 'lucide-react'
 import Card from '../common/Card'
 
 const tones = {
@@ -16,6 +16,7 @@ const rows = [
   { key: 'quotes_to_prepare', label: 'Quotes to prepare', icon: FileText, to: '/admin/orders?status=quote_pending', tone: 'violet' },
   { key: 'revisions_requested', label: 'Revisions requested', icon: RefreshCw, to: '/admin/orders?status=revision', tone: 'rose' },
   { key: 'unread_messages', label: 'Unread messages', icon: MessageSquare, to: '/admin/orders', tone: 'brand' },
+  { key: 'contact_messages', label: 'Contact messages', icon: Inbox, to: '/admin/contact', tone: 'sky' },
 ]
 
 export default function ActionQueue({ actions }) {
