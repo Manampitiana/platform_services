@@ -6,6 +6,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { flattenErrors } from '../../utils/flattenErrors'
 import { getApiError } from '../../utils/getApiError'
 import Avatar from '../common/Avatar'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const MAX_SIZE = 2 * 1024 * 1024
 const TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -14,6 +16,9 @@ export default function AvatarUploader() {
   const { user, setUser } = useAuth()
   const queryClient = useQueryClient()
   const inputRef = useRef(null)
+
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState(null)
@@ -44,6 +49,7 @@ export default function AvatarUploader() {
 
     try {
       setUser(await profileApi.uploadAvatar(file))
+      toast.success('Profile photo updated.')
       refreshCaches()
     } catch (err) {
       setError(flattenErrors(err).avatar ?? getApiError(err))
@@ -55,18 +61,20 @@ export default function AvatarUploader() {
   }
 
   const remove = async () => {
-    if (!window.confirm('Remove your profile photo?')) return
-
     setError('')
-    setBusy(true)
-    try {
-      setUser(await profileApi.removeAvatar())
-      refreshCaches()
-    } catch (err) {
-      setError(getApiError(err))
-    } finally {
-      setBusy(false)
-    }
+
+    const ok = await confirm({
+      title: 'Remove your profile photo?',
+      description: 'Your initials will be shown instead.',
+      confirmLabel: 'Remove photo',
+      tone: 'danger',
+      onConfirm: async () => {
+        setUser(await profileApi.removeAvatar())
+        refreshCaches()
+      },
+    })
+
+    if (ok) toast.success('Profile photo removed.')
   }
 
   return (

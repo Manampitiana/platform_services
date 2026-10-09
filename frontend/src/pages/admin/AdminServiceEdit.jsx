@@ -16,6 +16,8 @@ import FormFieldsTab from '../../components/admin/FormFieldsTab'
 import PackagesTab from '../../components/admin/PackagesTab'
 import ServiceFeaturesTab from '../../components/admin/ServiceFeaturesTab'
 import ServiceForm from '../../components/admin/ServiceForm'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const tabs = [
   { key: 'details', label: 'Details' },
@@ -29,13 +31,15 @@ export default function AdminServiceEdit() {
   const isNew = !id
   const navigate = useNavigate()
 
+  const confirm = useConfirm()
+  const toast = useToast()
+
   const { data: service, isLoading, isError, error, refetch } = useAdminService(id)
   const create = useCreateService()
   const update = useUpdateService(id)
   const remove = useDeleteService()
 
   const [tab, setTab] = useState('details')
-  const [deleteError, setDeleteError] = useState('')
 
   const back = (
     <Link to="/admin/services" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600">
@@ -74,17 +78,30 @@ export default function AdminServiceEdit() {
 
   const handleCreate = async (payload) => {
     const created = await create.mutateAsync(payload)
+
+    toast.success('Service created successfully.')
+
     navigate(`/admin/services/${created.id}`, { replace: true })
   }
+  const handleUpdate = async (payload) => {
+    const updated = await update.mutateAsync(payload)
 
+    toast.success('Service updated successfully.')
+
+    return updated
+  }
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${service.name}"? Existing orders keep their data.`)) return
-    setDeleteError('')
-    try {
-      await remove.mutateAsync(service.id)
+    const ok = await confirm({
+      title: `Delete "${service.name}"?`,
+      description: 'The service will be hidden from clients. Existing orders keep their data.',
+      confirmLabel: 'Delete service',
+      tone: 'danger',
+      onConfirm: () => remove.mutateAsync(service.id),
+    })
+
+    if (ok) {
+      toast.success('Service deleted.')
       navigate('/admin/services', { replace: true })
-    } catch (err) {
-      setDeleteError(getApiError(err))
     }
   }
 
@@ -101,7 +118,6 @@ export default function AdminServiceEdit() {
         )}
       </div>
 
-      {deleteError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{deleteError}</p>}
 
       {isNew ? (
         <ServiceForm service={null} onSubmit={handleCreate} />
@@ -112,18 +128,17 @@ export default function AdminServiceEdit() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium transition ${
-                  tab === t.key
-                    ? 'border-brand-600 text-brand-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                }`}
+                className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium transition ${tab === t.key
+                  ? 'border-brand-600 text-brand-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+                  }`}
               >
                 {t.label}
               </button>
             ))}
           </div>
 
-          {tab === 'details' && <ServiceForm key={service.id} service={service} onSubmit={update.mutateAsync} />}
+          {tab === 'details' && <ServiceForm key={service.id} service={service} onSubmit={handleUpdate} />}
           {tab === 'packages' && <PackagesTab service={service} />}
           {tab === 'features' && <ServiceFeaturesTab key={service.id} service={service} />}
           {tab === 'brief' && <FormFieldsTab key={service.id} service={service} />}

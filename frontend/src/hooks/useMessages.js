@@ -25,3 +25,15 @@ export function useSendMessage(uuid) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['messages', uuid] }),
   })
 }
+
+export function useDeleteMessage(uuid) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id) => messagesApi.remove(uuid, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['unread'] })
+    },
+  })
+}

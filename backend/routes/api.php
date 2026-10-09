@@ -97,6 +97,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/orders/{order}/messages', [OrderMessageController::class, 'store'])->middleware('throttle:30,1');
             Route::get('/orders/{order}/messages/{message}/attachment', [OrderMessageController::class, 'attachment']);
             Route::get('/messages/unread', [OrderMessageController::class, 'unread']);
+            Route::delete('/orders/{order}/messages/{message}', [OrderMessageController::class, 'destroy']);
 
             // Livrables (client)
             Route::get('/deliverables/{deliverable}/download', [DeliverableController::class, 'download']);

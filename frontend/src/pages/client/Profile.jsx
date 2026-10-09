@@ -17,6 +17,7 @@ export default function Profile() {
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
 
+
   const requested = params.get('tab')
   const tab = TABS.some((t) => t.value === requested) ? requested : 'general'
 

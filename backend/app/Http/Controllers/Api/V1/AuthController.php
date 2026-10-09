@@ -15,10 +15,10 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request)
     {
-        $user = User::create([
-            ...$request->validated(),
-            'role' => 'client',
-        ]);
+        $user = new User($request->safe()->except('terms'));
+        $user->terms_accepted_at = now();
+        $user->role = 'client';
+        $user->save();
 
         try {
             $user->sendEmailVerificationNotification();

@@ -27,6 +27,7 @@ class AuthTest extends TestCase
             'phone' => '0340000000',
             'password' => 'Str0ng-Pass!1',
             'password_confirmation' => 'Str0ng-Pass!1',
+            'terms' => true,
         ], $override);
     }
 
@@ -148,5 +149,18 @@ class AuthTest extends TestCase
             ->assertOk();
 
         Notification::assertNothingSent();
+    }
+
+    public function test_the_terms_must_be_accepted_and_the_acceptance_is_recorded(): void
+    {
+        $this->postJson('/api/v1/register', $this->registrationData(['terms' => false]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('terms');
+
+        $this->assertDatabaseCount('users', 0);
+
+        $this->postJson('/api/v1/register', $this->registrationData())->assertCreated();
+
+        $this->assertNotNull(User::where('email', 'jane@example.com')->firstOrFail()->terms_accepted_at);
     }
 }

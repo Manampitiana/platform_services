@@ -4,6 +4,8 @@ import { useChangeOrderStatus } from '../../hooks/useAdmin'
 import { getApiError } from '../../utils/getApiError'
 import Button from '../common/Button'
 import Card from '../common/Card'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const actionsByStatus = {
   submitted: [{ to: 'under_review', label: 'Start review', icon: Play }],
@@ -28,6 +30,9 @@ export default function AdminOrderActions({ order }) {
   const changeStatus = useChangeOrderStatus(order.uuid)
   const [error, setError] = useState('')
 
+  const confirm = useConfirm()
+  const toast = useToast()
+
   const actions = actionsByStatus[order.status] ?? []
   const canCancel = cancellable.includes(order.status)
 
@@ -42,10 +47,17 @@ export default function AdminOrderActions({ order }) {
     }
   }
 
-  const cancel = () => {
-    if (window.confirm('Cancel this order? This cannot be undone.')) {
-      run({ status: 'cancelled', note: 'Cancelled by admin' })
-    }
+  const cancel = async () => {
+    const ok = await confirm({
+      title: 'Cancel this order?',
+      description: 'The client will be notified. This cannot be undone.',
+      confirmLabel: 'Cancel order',
+      cancelLabel: 'Keep order',
+      tone: 'danger',
+      onConfirm: () => changeStatus.mutateAsync({ status: 'cancelled', note: 'Cancelled by admin' }),
+    })
+
+    if (ok) toast.success('Order cancelled.')
   }
 
   return (

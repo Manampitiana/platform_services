@@ -1,5 +1,4 @@
 import {
-  ArrowLeftRight,
   CreditCard,
   Globe,
   Inbox,
@@ -47,7 +46,6 @@ export default function AdminLayout() {
 
   const menuItems = [
     { to: '/admin/profile', label: 'Profile', icon: User },
-    { to: '/dashboard', label: 'Client view', icon: ArrowLeftRight },
     { to: '/', label: 'Public website', icon: Globe },
   ]
 

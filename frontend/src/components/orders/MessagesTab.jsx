@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { MessageSquare, Paperclip, Send, X } from 'lucide-react'
 import { messagesApi } from '../../api/messagesApi'
-import { useMessages, useSendMessage } from '../../hooks/useMessages'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
+import { useDeleteMessage, useMessages, useSendMessage } from '../../hooks/useMessages'
 import { getApiError } from '../../utils/getApiError'
 import Button from '../common/Button'
 import Card from '../common/Card'
@@ -12,9 +14,22 @@ import MessageBubble from './MessageBubble'
 
 const CLOSED = ['draft', 'cancelled', 'refunded']
 
+// Hafatra maromaro avy amin'ny olona iray, ao anatin'ny 5 minitra, dia atambatra.
+// Ny hafatra voafafa dia tsy atambatra (tombstone misaraka).
+const isGrouped = (current, previous) =>
+  Boolean(previous) &&
+  !previous.is_deleted &&
+  !current.is_deleted &&
+  previous.is_mine === current.is_mine &&
+  previous.sender.name === current.sender.name &&
+  new Date(current.created_at) - new Date(previous.created_at) < 5 * 60 * 1000
+
 export default function MessagesTab({ order }) {
   const { data: messages, isLoading, isError, error: loadError, refetch } = useMessages(order.uuid)
   const send = useSendMessage(order.uuid)
+  const removeMessage = useDeleteMessage(order.uuid)
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const [body, setBody] = useState('')
   const [attachment, setAttachment] = useState(null)
@@ -60,19 +75,30 @@ export default function MessagesTab({ order }) {
     }
   }
 
+  const handleDelete = async (message) => {
+    setError('')
+
+    const ok = await confirm({
+      title: 'Delete this message?',
+      description:
+        'It will be replaced by "This message was deleted" for everyone in this conversation.',
+      confirmLabel: 'Delete message',
+      tone: 'danger',
+      onConfirm: () => removeMessage.mutateAsync(message.id),
+    })
+
+    if (ok) toast.success('Message deleted.')
+  }
+
   if (isLoading) return <Skeleton className="h-64 w-full" />
+
   if (isError) {
-    return (
-      <ErrorState
-        description={loadError?.response?.data?.message}
-        onRetry={refetch}
-      />
-    )
+    return <ErrorState description={loadError?.response?.data?.message} onRetry={refetch} />
   }
 
   return (
     <Card className="space-y-4">
-      <div className="max-h-[50vh] min-h-40 space-y-3 overflow-y-auto pr-1 sm:max-h-96">
+      <div className="max-h-[50vh] min-h-40 overflow-y-auto pb-1 pr-1 sm:max-h-96">
         {count === 0 ? (
           <EmptyState
             icon={MessageSquare}
@@ -80,7 +106,15 @@ export default function MessagesTab({ order }) {
             description="Start the conversation about this order."
           />
         ) : (
-          messages.map((m) => <MessageBubble key={m.id} message={m} onDownload={download} />)
+          messages.map((m, i) => (
+            <MessageBubble
+              key={m.id}
+              message={m}
+              grouped={isGrouped(m, messages[i - 1])}
+              onDownload={download}
+              onDelete={handleDelete}
+            />
+          ))
         )}
         <div ref={bottomRef} />
       </div>

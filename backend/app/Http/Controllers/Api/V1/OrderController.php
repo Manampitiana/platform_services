@@ -39,6 +39,8 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request): JsonResponse
     {
+        Gate::authorize('create', Order::class);
+
         $service = Service::active()->where('slug', $request->validated('service'))->firstOrFail();
 
         $order = $this->orders->createDraft($request->user(), $service, $request->validated('package'));
@@ -81,7 +83,6 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        // toBase() = tsy misy cast enum, ka status dia string tsotra
         $counts = $user->orders()
             ->toBase()
             ->selectRaw('status, COUNT(*) as total')
@@ -90,10 +91,34 @@ class OrderController extends Controller
 
         $recent = $user->orders()->with('service')->latest()->limit(5)->get();
 
+        // Commande miandry ny client: devis alefa, livrable vonona, na paiement mbola tsy nalefa
+        $actions = $user->orders()
+            ->with('service')
+            ->where(function ($q) {
+                $q->whereIn('status', ['quote_sent', 'delivered'])
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'awaiting_payment')
+                            ->whereDoesntHave('payments', fn($p) => $p->whereIn('status', ['pending', 'proof_submitted']));
+                    });
+            })
+            ->latest('updated_at')
+            ->limit(5)
+            ->get()
+            ->map(fn(Order $o) => [
+                'uuid' => $o->uuid,
+                'order_number' => $o->order_number,
+                'service' => $o->service?->name,
+                'status' => $o->status->value,
+                'total' => $o->total,
+                'currency' => $o->currency,
+            ])
+            ->values();
+
         return response()->json([
             'data' => [
                 'counts' => $counts,
                 'recent' => OrderResource::collection($recent)->resolve(),
+                'actions' => $actions,
             ],
         ]);
     }

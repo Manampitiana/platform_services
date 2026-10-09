@@ -8,6 +8,7 @@ use App\Http\Resources\DeliverableResource;
 use App\Models\Order;
 use App\Services\DeliverableService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class AdminDeliverableController extends Controller
 {
@@ -17,6 +18,8 @@ class AdminDeliverableController extends Controller
 
     public function store(StoreDeliverableRequest $request, Order $order): JsonResponse
     {
+        Gate::authorize('manage', $order);
+
         $deliverable = $this->deliverables->deliver(
             $order,
             $request->user(),

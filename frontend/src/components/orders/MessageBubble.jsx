@@ -1,15 +1,25 @@
 import { motion } from 'motion/react'
-import { Check, CheckCheck, Paperclip } from 'lucide-react'
+import { Ban, Check, CheckCheck, Paperclip, Trash2 } from 'lucide-react'
 import Avatar from '../common/Avatar'
-import { datetimeRegex } from 'zod/v3'
-import { _isoDateTime } from 'zod/v4/core'
 
 const time = (date) =>
   new Date(date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
-export default function MessageBubble({ message, grouped = false, onDownload }) {
+export default function MessageBubble({ message, grouped = false, onDownload, onDelete }) {
   const mine = message.is_mine
   const seen = Boolean(message.read_at)
+
+  // Hafatra voafafa: soloina tombstone, tsy misy votoatiny
+  if (message.is_deleted) {
+    return (
+      <div className={`mt-2 flex ${mine ? 'justify-end' : 'justify-start'}`}>
+        <p className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-xs italic text-slate-400">
+          <Ban className="h-3.5 w-3.5" />
+          {mine ? 'You deleted this message' : 'This message was deleted'}
+        </p>
+      </div>
+    )
+  }
 
   const bubble = mine ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-800'
   const tailColor = mine ? 'bg-brand-600' : 'bg-slate-100'
@@ -21,7 +31,6 @@ export default function MessageBubble({ message, grouped = false, onDownload }) 
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className={`flex items-end gap-2.5 ${mine ? 'flex-row-reverse' : ''} ${grouped ? 'mt-1' : 'mt-4'}`}
     >
-      {/* Avatar: nafenina rehefa andiana hafatra avy amin'ny olona iray */}
       <div className="w-9 shrink-0 self-start pt-5">
         {!grouped && <Avatar name={message.sender.name} src={message.sender.avatar_url} />}
       </div>
@@ -51,7 +60,6 @@ export default function MessageBubble({ message, grouped = false, onDownload }) 
           className={`relative break-words rounded-2xl px-4 py-2.5 text-sm ${bubble} ${!grouped ? (mine ? 'rounded-br-none' : 'rounded-bl-none') : ''
             }`}
         >
-          {/* Rambony */}
           {!grouped && (
             <span
               aria-hidden="true"
@@ -80,19 +88,28 @@ export default function MessageBubble({ message, grouped = false, onDownload }) 
           )}
         </div>
 
-        {/* Delivered / Seen: ho an'ny hafatra nalefanao ihany */}
-        {mine && (
-          <p className="mt-1 flex items-center gap-1 px-1 text-[11px] text-slate-400">
-            {seen ? (
-              <>
-                <CheckCheck className="h-3 w-3 text-brand-500" /> Seen at {time(message.read_at)}
-              </>
-            ) : (
-              <>
-                <Check className="h-3 w-3" /> Delivered
-              </>
+        {(mine || message.can_delete) && (
+          <div className="mt-1 flex items-center gap-3 px-1 text-[11px] text-slate-400">
+            {mine &&
+              (seen ? (
+                <span className="inline-flex items-center gap-1">
+                  <CheckCheck className="h-3 w-3 text-brand-500" /> Seen at {time(message.read_at)}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Delivered
+                </span>
+              ))}
+
+            {message.can_delete && (
+              <button
+                onClick={() => onDelete(message)}
+                className="inline-flex items-center gap-1 transition hover:text-red-600"
+              >
+                <Trash2 className="h-3 w-3" /> Delete
+              </button>
             )}
-          </p>
+          </div>
         )}
       </div>
     </motion.div>

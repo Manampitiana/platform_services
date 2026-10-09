@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
 import { Check, Clock, RefreshCw, X } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 import Badge from '../common/Badge'
 import Button from '../common/Button'
 import Card from '../common/Card'
 import { formatPrice } from '../../utils/formatPrice'
 
 export default function PackageCard({ pkg, serviceSlug, currency }) {
+  const { isAdmin } = useAuth()
   return (
     <Card
       className={`flex h-full flex-col ${pkg.is_popular ? 'border-brand-500 ring-2 ring-brand-500' : ''}`}
@@ -41,11 +43,17 @@ export default function PackageCard({ pkg, serviceSlug, currency }) {
         ))}
       </ul>
 
-      <Link to={`/orders/new?service=${serviceSlug}&package=${pkg.slug}`} className="mt-6">
-        <Button variant={pkg.is_popular ? 'primary' : 'secondary'} className="w-full">
-          Order {pkg.name}
+      {isAdmin ? (
+        <Button variant="secondary" className="mt-6 w-full" disabled title="Administrator accounts cannot place orders">
+          Orders are for clients
         </Button>
-      </Link>
+      ) : (
+        <Link to={`/orders/new?service=${serviceSlug}&package=${pkg.slug}`} className="mt-6">
+          <Button variant={pkg.is_popular ? 'primary' : 'secondary'} className="w-full">
+            Order {pkg.name}
+          </Button>
+        </Link>
+      )}
     </Card>
   )
 }

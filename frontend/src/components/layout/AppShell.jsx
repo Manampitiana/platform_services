@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Menu, PanelLeftClose, PanelLeftOpen, Rocket, X } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import SidebarNav from './SidebarNav'
 import UserMenu from './UserMenu'
+
+import ErrorBoundary from '../common/ErrorBoundary'
+import PageSkeleton from '../common/PageSkeleton'
 
 const themes = {
   admin: {
@@ -109,9 +112,8 @@ export default function AppShell({
           <button
             onClick={toggle}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`flex w-full items-center rounded-xl py-2.5 text-sm font-medium transition ${
-              collapsed ? 'justify-center' : 'gap-3 px-3'
-            } ${theme.toggle}`}
+            className={`flex w-full items-center rounded-xl py-2.5 text-sm font-medium transition ${collapsed ? 'justify-center' : 'gap-3 px-3'
+              } ${theme.toggle}`}
           >
             {collapsed ? (
               <PanelLeftOpen className="h-[18px] w-[18px]" />
@@ -177,7 +179,11 @@ export default function AppShell({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <Outlet />
+            <ErrorBoundary>
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
           </motion.div>
         </main>
       </div>

@@ -17,6 +17,29 @@ export function AuthProvider({ children }) {
             .finally(() => setLoading(false))
     }, []);
 
+    // Lany ny session → mivoaka ; tsy voamarina ny e-mail → havaozy ny user (mivadika any /verify-email)
+    useEffect(() => {
+        const onExpired = () => {
+            setUser(null)
+            queryClient.clear()
+        }
+
+        const onUnverified = () => {
+            authApi
+                .me()
+                .then((res) => setUser(res.data.data))
+                .catch(() => { })
+        }
+
+        window.addEventListener('auth:expired', onExpired)
+        window.addEventListener('auth:unverified', onUnverified)
+
+        return () => {
+            window.removeEventListener('auth:expired', onExpired)
+            window.removeEventListener('auth:unverified', onUnverified)
+        }
+    }, [queryClient])
+
     const login = useCallback(async (credentials) => {
         const res = await authApi.login(credentials)
         setUser(res.data.data)
@@ -30,10 +53,14 @@ export function AuthProvider({ children }) {
     }, []);
 
     const logout = useCallback(async () => {
-        await authApi.logout()
+        try {
+            await authApi.logout()
+        } catch {
+            /* efa lany ny session: tsy olana */
+        }
         setUser(null)
         queryClient.clear()
-    }, [queryClient]);
+    }, [queryClient])
 
     const value = {
         user,

@@ -43,22 +43,18 @@ export default function ServiceForm({ service, onSubmit }) {
   const [slugTouched, setSlugTouched] = useState(!isNew)
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
-  const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const set = (key) => (e) => {
-    setSaved(false)
     setForm((f) => ({ ...f, [key]: e.target.value }))
   }
 
   const toggle = (key) => (e) => {
-    setSaved(false)
     setForm((f) => ({ ...f, [key]: e.target.checked }))
   }
 
   const changeName = (e) => {
     const name = e.target.value
-    setSaved(false)
     setForm((f) => ({ ...f, name, slug: slugTouched ? f.slug : slugify(name) }))
   }
 
@@ -66,7 +62,6 @@ export default function ServiceForm({ service, onSubmit }) {
     e.preventDefault()
     setErrors({})
     setFormError('')
-    setSaved(false)
     setSaving(true)
 
     try {
@@ -79,7 +74,6 @@ export default function ServiceForm({ service, onSubmit }) {
         revisions_included: Number(form.revisions_included) || 0,
         sort_order: Number(form.sort_order) || 0,
       })
-      setSaved(true)
     } catch (err) {
       const fieldErrors = flattenErrors(err)
       setErrors(fieldErrors)
@@ -93,7 +87,6 @@ export default function ServiceForm({ service, onSubmit }) {
     <Card>
       <form onSubmit={submit} className="space-y-5">
         {formError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
-        {saved && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">Saved.</p>}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Name *" value={form.name} onChange={changeName} error={errors.name} />

@@ -8,11 +8,16 @@ import EmptyState from '../common/EmptyState'
 import Modal from '../common/Modal'
 import Textarea from '../common/Textarea'
 import DeliverableCard from './DeliverableCard'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function DeliverablesTab({ order, readOnly = false }) {
   const deliverables = order.deliverables ?? []
   const approve = useApproveDeliverable()
   const revise = useRequestRevision()
+
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
@@ -23,13 +28,14 @@ export default function DeliverablesTab({ order, readOnly = false }) {
   const remaining = Math.max(0, (order.revisions_allowed ?? 0) - (order.revisions_used ?? 0))
 
   const handleApprove = async () => {
-    if (!window.confirm('Approve this delivery and complete the order?')) return
-    setError('')
-    try {
-      await approve.mutateAsync(latest.id)
-    } catch (err) {
-      setError(getApiError(err))
-    }
+    const ok = await confirm({
+      title: 'Approve this delivery?',
+      description: 'Your order will be marked as completed and you will no longer be able to request a revision.',
+      confirmLabel: 'Approve and complete',
+      onConfirm: () => approve.mutateAsync(latest.id),
+    })
+
+    if (ok) toast.success('Delivery approved. Thank you!')
   }
 
   const handleRevision = async () => {
@@ -37,6 +43,7 @@ export default function DeliverablesTab({ order, readOnly = false }) {
     try {
       await revise.mutateAsync({ id: latest.id, note })
       setOpen(false)
+      toast.success('Revision request sent.')
       setNote('')
     } catch (err) {
       setError(getApiError(err))

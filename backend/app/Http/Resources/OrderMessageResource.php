@@ -9,11 +9,16 @@ class OrderMessageResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $deleted = $this->deleted_at !== null;
+
         return [
             'id' => $this->id,
-            'body' => $this->body,
-            'has_attachment' => (bool) $this->attachment_path,
-            'attachment_name' => $this->attachment_name,
+            // Ny votoatiny dia tsy mivoaka intsony rehefa voafafa
+            'body' => $deleted ? null : $this->body,
+            'has_attachment' => ! $deleted && (bool) $this->attachment_path,
+            'attachment_name' => $deleted ? null : $this->attachment_name,
+            'is_deleted' => $deleted,
+            'can_delete' => $request->user()?->can('delete', $this->resource) ?? false,
             'is_mine' => $this->user_id === $request->user()?->id,
             'sender' => [
                 'name' => $this->user?->name,

@@ -61,11 +61,15 @@ class MessageTest extends TestCase
     public function test_internal_notes_are_hidden_from_clients(): void
     {
         OrderMessage::create([
-            'order_id' => $this->order->id, 'user_id' => $this->staff->id,
-            'body' => 'Internal: client is slow to pay', 'is_internal' => true,
+            'order_id' => $this->order->id,
+            'user_id' => $this->staff->id,
+            'body' => 'Internal: client is slow to pay',
+            'is_internal' => true,
         ]);
         OrderMessage::create([
-            'order_id' => $this->order->id, 'user_id' => $this->staff->id, 'body' => 'Public reply',
+            'order_id' => $this->order->id,
+            'user_id' => $this->staff->id,
+            'body' => 'Public reply',
         ]);
 
         $this->actingAs($this->customer)
@@ -108,7 +112,7 @@ class MessageTest extends TestCase
         }
 
         $sent = Notification::sent($this->staff, OrderActivity::class)
-            ->filter(fn ($notification) => $notification->event === 'message.new');
+            ->filter(fn($notification) => $notification->event === 'message.new');
 
         $this->assertCount(1, $sent);
     }
@@ -126,5 +130,108 @@ class MessageTest extends TestCase
         $this->actingAs($this->client())->get($url)->assertForbidden();
         $this->actingAs($this->customer)->get($url)->assertOk();
         $this->actingAs($this->staff)->get($url)->assertOk();
+    }
+
+    private function say(User $as, string $body = 'Hello'): int
+    {
+        return $this->actingAs($as)
+            ->postJson("/api/v1/orders/{$this->order->uuid}/messages", ['body' => $body])
+            ->assertCreated()
+            ->json('data.id');
+    }
+
+    public function test_authors_can_delete_a_recent_message_and_its_content_is_hidden(): void
+    {
+        $id = $this->say($this->customer, 'Oops wrong order');
+
+        $this->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")
+            ->assertOk()
+            ->assertJsonPath('data.is_deleted', true)
+            ->assertJsonPath('data.body', null);
+
+        $this->actingAs($this->staff)
+            ->getJson("/api/v1/orders/{$this->order->uuid}/messages")
+            ->assertJsonPath('data.0.is_deleted', true)
+            ->assertJsonPath('data.0.body', null);
+
+        // Voatahiry ho an'ny audit
+        $this->assertDatabaseHas('order_messages', ['id' => $id, 'body' => 'Oops wrong order']);
+    }
+
+    public function test_authors_cannot_delete_a_message_after_ten_minutes(): void
+    {
+        $id = $this->say($this->customer);
+
+        $this->travel(11)->minutes();
+
+        $this->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")->assertForbidden();
+    }
+
+    public function test_nobody_can_delete_someone_elses_message_except_admins(): void
+    {
+        $fromStaff = $this->say($this->staff, 'Hello Jane');
+        $fromCustomer = $this->say($this->customer, 'Hello team');
+
+        $this->actingAs($this->customer)
+            ->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$fromStaff}")
+            ->assertForbidden();
+
+        $this->actingAs($this->client())
+            ->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$fromCustomer}")
+            ->assertForbidden();
+
+        $this->travel(30)->minutes();
+
+        // Admin: modération, na efa lany aza ny 10 minitra
+        $this->actingAs($this->staff)
+            ->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$fromCustomer}")
+            ->assertOk();
+    }
+
+    public function test_a_message_cannot_be_deleted_twice(): void
+    {
+        $id = $this->say($this->customer);
+
+        $this->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")->assertOk();
+        $this->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")->assertForbidden();
+    }
+
+    public function test_a_message_cannot_be_deleted_through_another_order(): void
+    {
+        $id = $this->say($this->customer);
+
+        $other = $this->client();
+        $otherOrder = $this->submittedOrder($other);
+
+        $this->actingAs($other)
+            ->deleteJson("/api/v1/orders/{$otherOrder->uuid}/messages/{$id}")
+            ->assertNotFound();
+    }
+
+    public function test_deleted_attachments_can_no_longer_be_downloaded(): void
+    {
+        $id = $this->actingAs($this->customer)
+            ->postForm("/api/v1/orders/{$this->order->uuid}/messages", ['attachment' => $this->pdf('spec.pdf')])
+            ->assertCreated()
+            ->json('data.id');
+
+        $url = "/api/v1/orders/{$this->order->uuid}/messages/{$id}/attachment";
+
+        $this->get($url)->assertOk();
+        $this->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")->assertOk();
+        $this->get($url)->assertNotFound();
+    }
+
+    public function test_deleted_messages_are_not_counted_as_unread(): void
+    {
+        $id = $this->say($this->staff);
+
+        $this->actingAs($this->customer)->getJson('/api/v1/messages/unread')->assertJsonPath('data.total', 1);
+
+        $this->actingAs($this->staff)
+            ->deleteJson("/api/v1/orders/{$this->order->uuid}/messages/{$id}")
+            ->assertOk();
+
+        $this->actingAs($this->customer)->getJson('/api/v1/messages/unread')->assertJsonPath('data.total', 0);
     }
 }

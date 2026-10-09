@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { useSaveServiceFields } from '../../hooks/useAdmin'
 import { getApiError } from '../../utils/getApiError'
 import { slugify } from '../../utils/slugify'
+import { useToast } from '../../contexts/ToastContext'
 import Button from '../common/Button'
 import Card from '../common/Card'
 import CheckField from '../common/CheckField'
@@ -51,12 +52,16 @@ const blank = () => ({
 export default function FormFieldsTab({ service }) {
   const save = useSaveServiceFields(service.id)
   const [fields, setFields] = useState(() => (service.form_fields ?? []).map(fromApi))
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const toast = useToast()
 
   const update = (i, patch) => {
-    setMessage('')
-    setFields((list) => list.map((f, idx) => (idx === i ? { ...f, ...patch } : f)))
+    setError('')
+    setFields((list) =>
+      list.map((f, idx) =>
+        idx === i ? { ...f, ...patch } : f
+      )
+    )
   }
 
   const changeLabel = (i, label) =>
@@ -67,13 +72,12 @@ export default function FormFieldsTab({ service }) {
     if (j < 0 || j >= fields.length) return
     setFields((list) => {
       const copy = [...list]
-      ;[copy[i], copy[j]] = [copy[j], copy[i]]
+        ;[copy[i], copy[j]] = [copy[j], copy[i]]
       return copy
     })
   }
 
   const submit = async () => {
-    setMessage('')
     setError('')
 
     const payload = fields.map((f) => ({
@@ -83,7 +87,10 @@ export default function FormFieldsTab({ service }) {
       placeholder: f.placeholder || null,
       help_text: f.help_text || null,
       options: hasOptions(f.type)
-        ? f.options.split(',').map((o) => o.trim()).filter(Boolean)
+        ? f.options
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
         : null,
       is_required: f.is_required,
       is_active: f.is_active,
@@ -91,7 +98,8 @@ export default function FormFieldsTab({ service }) {
 
     try {
       await save.mutateAsync(payload)
-      setMessage('Brief form saved.')
+
+      toast.success('Brief form saved successfully.')
     } catch (err) {
       setError(getApiError(err))
     }
@@ -107,7 +115,6 @@ export default function FormFieldsTab({ service }) {
         </p>
       </Card>
 
-      {message && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{message}</p>}
       {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {fields.map((f, i) => (

@@ -18,6 +18,8 @@ import Modal from '../../components/common/Modal'
 import PageHeader from '../../components/common/PageHeader'
 import Skeleton from '../../components/common/Skeleton'
 import Textarea from '../../components/common/Textarea'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const empty = {
   id: null,
@@ -33,6 +35,9 @@ export default function AdminPaymentMethods() {
   const { data, isLoading, isError, refetch } = useAdminPaymentMethods()
   const save = useSavePaymentMethod()
   const remove = useDeletePaymentMethod()
+
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const [form, setForm] = useState(null) // null = modal fermé
   const [errors, setErrors] = useState({})
@@ -56,27 +61,44 @@ export default function AdminPaymentMethods() {
     setErrors({})
     setFormError('')
 
+    const isEditing = !!form.id
+
     const { id, ...payload } = form
+
     if (id) delete payload.code
 
     try {
       await save.mutateAsync({ id, ...payload })
+
       setForm(null)
+
+      toast.success(
+        isEditing
+          ? 'Payment method updated successfully.'
+          : 'Payment method created successfully.'
+      )
     } catch (err) {
       const fieldErrors = flattenErrors(err)
       setErrors(fieldErrors)
-      if (!Object.keys(fieldErrors).length) setFormError(getApiError(err))
+
+      if (!Object.keys(fieldErrors).length) {
+        setFormError(getApiError(err))
+      }
     }
   }
 
   const handleDelete = async (method) => {
-    if (!window.confirm(`Delete "${method.name}"?`)) return
     setListError('')
-    try {
-      await remove.mutateAsync(method.id)
-    } catch (err) {
-      setListError(getApiError(err))
-    }
+
+    const ok = await confirm({
+      title: `Delete "${method.name}"?`,
+      description: 'Clients will no longer see this payment method. This cannot be undone.',
+      confirmLabel: 'Delete method',
+      tone: 'danger',
+      onConfirm: () => remove.mutateAsync(method.id),
+    })
+
+    if (ok) toast.success('Payment method deleted.')
   }
 
   return (

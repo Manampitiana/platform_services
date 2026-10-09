@@ -8,65 +8,45 @@ use Illuminate\Auth\Access\Response;
 
 class OrderPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    // Ny admin dia tsy manao commande
+    public function create(User $user): Response
     {
-        return false;
+        return $user->isAdmin()
+            ? Response::deny('Administrator accounts cannot place orders. Use a client account.')
+            : Response::allow();
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Order $order): bool
     {
         return $user->isAdmin() || $order->user_id === $user->id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
+    // Hetsika an'ny client: brief, submit, fichier, paiement, devis, approbation, révision
     public function update(User $user, Order $order): bool
     {
-        return $order->user_id === $user->id;
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Order $order): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Order $order): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Order $order): bool
-    {
-        return false;
+        return ! $user->isAdmin() && $order->user_id === $user->id;
     }
 
     public function message(User $user, Order $order): bool
     {
+        // Admin tsy mifampiresaka amin'ny tenany
+        if ($user->isAdmin() && $order->user_id === $user->id) {
+            return false;
+        }
+
         return $this->view($user, $order)
             && ! in_array($order->status->value, ['draft', 'cancelled', 'refunded'], true);
+    }
+
+    // Hetsika an'ny admin: tsy azo atao amin'ny commande an'ny tenany
+    public function manage(User $user, Order $order): Response
+    {
+        if (! $user->isAdmin()) {
+            return Response::deny();
+        }
+
+        return $order->user_id === $user->id
+            ? Response::deny('You cannot manage your own order. Ask another administrator.')
+            : Response::allow();
     }
 }

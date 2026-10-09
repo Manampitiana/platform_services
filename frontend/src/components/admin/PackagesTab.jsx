@@ -13,6 +13,8 @@ import Input from '../common/Input'
 import Modal from '../common/Modal'
 import Textarea from '../common/Textarea'
 import FeatureListEditor from './FeatureListEditor'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const emptyPackage = {
   id: null,
@@ -40,17 +42,20 @@ export default function PackagesTab({ service }) {
 
   const packages = service.packages ?? []
 
+  const confirm = useConfirm()
+  const toast = useToast()
+
   const open = (pkg) => {
     setErrors({})
     setFormError('')
     setForm(
       pkg
         ? {
-            ...pkg,
-            description: pkg.description ?? '',
-            estimated_days: pkg.estimated_days ?? '',
-            features: pkg.features.map((f) => ({ label: f.label, is_included: f.is_included })),
-          }
+          ...pkg,
+          description: pkg.description ?? '',
+          estimated_days: pkg.estimated_days ?? '',
+          features: pkg.features.map((f) => ({ label: f.label, is_included: f.is_included })),
+        }
         : emptyPackage
     )
   }
@@ -61,6 +66,8 @@ export default function PackagesTab({ service }) {
     e.preventDefault()
     setErrors({})
     setFormError('')
+
+    const isEditing = !!form.id
 
     const payload = {
       name: form.name,
@@ -74,24 +81,40 @@ export default function PackagesTab({ service }) {
     }
 
     try {
-      if (form.id) await update.mutateAsync({ id: form.id, ...payload })
-      else await create.mutateAsync(payload)
+      if (isEditing) {
+        await update.mutateAsync({
+          id: form.id,
+          ...payload,
+        })
+
+        toast.success('Package updated successfully.')
+      } else {
+        await create.mutateAsync(payload)
+
+        toast.success('Package created successfully.')
+      }
+
       setForm(null)
     } catch (err) {
       const fieldErrors = flattenErrors(err)
       setErrors(fieldErrors)
-      if (!Object.keys(fieldErrors).length) setFormError(getApiError(err))
+
+      if (!Object.keys(fieldErrors).length) {
+        setFormError(getApiError(err))
+      }
     }
   }
 
   const handleDelete = async (pkg) => {
-    if (!window.confirm(`Delete package "${pkg.name}"?`)) return
-    setListError('')
-    try {
-      await remove.mutateAsync(pkg.id)
-    } catch (err) {
-      setListError(getApiError(err))
-    }
+    const ok = await confirm({
+      title: `Delete package "${pkg.name}"?`,
+      description: 'Packages used by existing orders cannot be deleted; deactivate them instead.',
+      confirmLabel: 'Delete package',
+      tone: 'danger',
+      onConfirm: () => remove.mutateAsync(pkg.id),
+    })
+
+    if (ok) toast.success('Package deleted.')
   }
 
   return (

@@ -16,6 +16,8 @@ import ErrorState from '../../components/common/ErrorState'
 import PageHeader from '../../components/common/PageHeader'
 import Pagination from '../../components/common/Pagination'
 import Skeleton from '../../components/common/Skeleton'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const FILTERS = [
   { value: 'open', label: 'To handle' },
@@ -28,6 +30,9 @@ export default function AdminContactMessages() {
   const [page, setPage] = useState(1)
   const [openId, setOpenId] = useState(null)
   const [error, setError] = useState('')
+
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const { data, isLoading, isError, refetch } = useAdminContactMessages({ status, page })
   const handle = useHandleContact()
@@ -48,9 +53,20 @@ export default function AdminContactMessages() {
     setOpenId(null)
   }
 
+  const confirmDelete = async (m) => {
+    const ok = await confirm({
+      title: 'Delete this message?',
+      description: `The message from ${m.name} will be permanently deleted.`,
+      confirmLabel: 'Delete message',
+      tone: 'danger',
+      onConfirm: () => remove.mutateAsync(m.id),
+    })
+
+    if (ok) toast.success('Message deleted.')
+  }
+
   const chip = (active) =>
-    `shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition ${
-      active ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+    `shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition ${active ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
     }`
 
   return (
@@ -115,7 +131,12 @@ export default function AdminContactMessages() {
                               size="sm"
                               variant="secondary"
                               leftIcon={RotateCcw}
-                              onClick={() => run(() => handle.mutateAsync({ id: m.id, reopen: true }))}
+                              onClick={() =>
+                                run(async () => {
+                                  await handle.mutateAsync({ id: m.id, reopen: true })
+                                  toast.success('Message reopened.')
+                                })
+                              }
                             >
                               Reopen
                             </Button>
@@ -124,7 +145,12 @@ export default function AdminContactMessages() {
                               size="sm"
                               variant="secondary"
                               leftIcon={Check}
-                              onClick={() => run(() => handle.mutateAsync({ id: m.id }))}
+                              onClick={() =>
+                                run(async () => {
+                                  await handle.mutateAsync({ id: m.id })
+                                  toast.success('Marked as handled.')
+                                })
+                              }
                             >
                               Mark as handled
                             </Button>
@@ -134,7 +160,7 @@ export default function AdminContactMessages() {
                             size="sm"
                             variant="ghost"
                             leftIcon={Trash2}
-                            onClick={() => window.confirm('Delete this message?') && run(() => remove.mutateAsync(m.id))}
+                            onClick={() => confirmDelete(m)}
                           >
                             Delete
                           </Button>

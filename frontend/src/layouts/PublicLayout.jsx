@@ -3,6 +3,10 @@ import { motion } from 'motion/react'
 import ScrollToTop from '../components/common/ScrollToTop'
 import Footer from '../components/layout/Footer'
 import Navbar from '../components/layout/Navbar'
+import { Suspense } from 'react'
+
+import ErrorBoundary from '../components/common/ErrorBoundary'
+import Loader from '../components/common/Loader'
 
 export default function PublicLayout() {
   const { pathname } = useLocation()
@@ -20,13 +24,12 @@ export default function PublicLayout() {
       <Navbar />
 
       <main id="main" className="flex-1">
-        <motion.div
-          key={pathname}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-        >
-          <Outlet />
+        <motion.div key={pathname} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+          <ErrorBoundary>
+            <Suspense fallback={<Loader />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </motion.div>
       </main>
 

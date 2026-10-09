@@ -10,6 +10,7 @@ import Alert from '../common/Alert'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import FormCard from './FormCard'
+import { useToast } from '../../contexts/ToastContext'
 
 const schema = z.object({
   name: z.string().trim().min(2, 'Name is required'),
@@ -22,6 +23,8 @@ const toValues = (u) => ({ name: u.name, email: u.email, phone: u.phone ?? '' })
 export default function GeneralTab() {
   const { user, setUser } = useAuth()
   const [flash, setFlash] = useFlash()
+
+  const toast = useToast()
 
   const {
     register,
@@ -39,12 +42,11 @@ export default function GeneralTab() {
       const updated = await profileApi.update(values)
       setUser(updated)
       reset(toValues(updated)) // mamafa ny "unsaved changes"
-      setFlash({
-        tone: 'success',
-        text: emailChanged
+      toast.success(
+        emailChanged
           ? `Profile updated. We sent a verification link to ${updated.email}.`
-          : 'Your profile has been updated.',
-      })
+          : 'Your profile has been updated.'
+      )
     } catch (error) {
       if (!applyApiErrors(error, setError)) setFlash({ tone: 'error', text: getApiError(error) })
     }

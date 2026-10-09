@@ -22,4 +22,5 @@ export const messagesApi = {
   },
   
   unread: () => api.get('/messages/unread').then((res) => res.data.data),
+  remove: (uuid, id) => api.delete(`/orders/${uuid}/messages/${id}`),
 }

@@ -10,6 +10,7 @@ use App\Models\Quote;
 use App\Services\QuoteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AdminQuoteController extends Controller
 {
@@ -19,6 +20,8 @@ class AdminQuoteController extends Controller
 
     public function store(Request $request, Order $order): JsonResponse
     {
+        Gate::authorize('manage', $order);
+
         $quote = $this->quotes->createDraft($order, $request->user());
 
         return (new QuoteResource($quote))->response()->setStatusCode(201);
@@ -26,16 +29,20 @@ class AdminQuoteController extends Controller
 
     public function update(UpdateQuoteRequest $request, Quote $quote): QuoteResource
     {
+        Gate::authorize('manage', $quote->order);
         return new QuoteResource($this->quotes->updateDraft($quote, $request->validated()));
     }
 
     public function send(Request $request, Quote $quote): QuoteResource
     {
+        Gate::authorize('manage', $quote->order);
         return new QuoteResource($this->quotes->send($quote, $request->user()));
     }
 
     public function destroy(Quote $quote): JsonResponse
     {
+        Gate::authorize('manage', $quote->order);
+        
         $this->quotes->deleteDraft($quote);
 
         return response()->json(null, 204);

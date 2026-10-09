@@ -1,10 +1,10 @@
-import { Globe, LayoutDashboard, PlusCircle, ShieldCheck, ShoppingBag, User } from 'lucide-react'
+import { Globe, LayoutDashboard, PlusCircle, ShoppingBag, User } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUnread } from '../hooks/useUnread'
 import AppShell from '../components/layout/AppShell'
 
 export default function ClientLayout() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout } = useAuth()
   const { data: unread } = useUnread()
 
   const sections = [
@@ -24,7 +24,6 @@ export default function ClientLayout() {
 
   const menuItems = [
     { to: '/profile', label: 'Profile', icon: User },
-    ...(isAdmin ? [{ to: '/admin', label: 'Admin panel', icon: ShieldCheck }] : []),
     { to: '/', label: 'Public website', icon: Globe },
   ]
 

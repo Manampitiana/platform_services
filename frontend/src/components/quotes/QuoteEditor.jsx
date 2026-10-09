@@ -10,6 +10,8 @@ import Input from '../common/Input'
 import Textarea from '../common/Textarea'
 import QuoteStatusBadge from '../common/QuoteStatusBadge'
 import QuoteTotals from './QuoteTotals'
+import { useConfirm } from '../../contexts/ConfirmContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const blankItem = () => ({ title: '', description: '', quantity: 1, unit_price: '', discount: '' })
 
@@ -34,6 +36,9 @@ export default function QuoteEditor({ quote }) {
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
   const [formError, setFormError] = useState('')
+
+  const confirm = useConfirm()
+  const toast = useToast()
 
   const totals = calcQuote(items, taxRate)
 
@@ -75,21 +80,34 @@ export default function QuoteEditor({ quote }) {
   const saveDraft = () =>
     run(async () => {
       await save.mutateAsync(payload())
-      setMessage('Draft saved.')
+      toast.success('Draft saved.')
     })
 
-  const sendToClient = () => {
-    if (!window.confirm('Send this quote to the client? You will not be able to edit it afterwards.')) return
-
+  const sendToClient = () =>
     run(async () => {
-      await save.mutateAsync(payload())
-      await send.mutateAsync(quote.id)
-    })
-  }
+      await save.mutateAsync(payload()) // manamarina sy mitahiry; ny erreur champ miseho ao amin'ny form
 
-  const deleteDraft = () => {
-    if (!window.confirm('Delete this draft?')) return
-    run(() => remove.mutateAsync(quote.id))
+      const ok = await confirm({
+        title: 'Send this quote to the client?',
+        description:
+          'The client will be notified by email. You will not be able to edit this version afterwards, but you can create a new version later.',
+        confirmLabel: 'Send quote',
+        onConfirm: () => send.mutateAsync(quote.id),
+      })
+
+      if (ok) toast.success('Quote sent to the client.')
+    })
+
+  const deleteDraft = async () => {
+    const ok = await confirm({
+      title: 'Delete this draft?',
+      description: 'This draft and its items will be permanently deleted.',
+      confirmLabel: 'Delete draft',
+      tone: 'danger',
+      onConfirm: () => remove.mutateAsync(quote.id),
+    })
+
+    if (ok) toast.success('Draft deleted.')
   }
 
   return (
@@ -102,7 +120,7 @@ export default function QuoteEditor({ quote }) {
       </div>
 
       {formError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
-      {message && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{message}</p>}
+      {/* {message && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{message}</p>} */}
 
       <div className="space-y-4">
         {items.map((item, i) => (
